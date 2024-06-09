@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitação de Manutenção de TI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Solicitação de Manutenção de TI</h1>
+    <form id="requestForm">
+        <label for="name">Nome:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" >
+        
+        <label for="department">Departamento ou Laboratório</label>
+        <input type="text" id="department" name="department" required>
+        
+        <label for="issue">Descrição do Problema:</label>
+        <textarea id="issue" name="issue" required></textarea>
+        
+        <label for="urgency">Grau de Urgência:</label>
+        <select id="urgency" name="urgency" required>
+            <option value="Baixa">Baixa</option>
+            <option value="Média">Média</option>
+            <option value="Alta">Alta</option>
+        </select>
+
+        <button type="submit">Enviar Solicitação</button>
+    </form>
+
+    <script>
+        document.getElementById('requestForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(event.target);
+            
+            fetch('/submit-request', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                event.target.reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao enviar solicitação.');
+            });
+        });
+    </script>
+</body>
+</html>

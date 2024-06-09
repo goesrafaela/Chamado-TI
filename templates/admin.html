@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração de Chamadas de TI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button.resolved {
+            background-color: #28a745;
+        }
+        .urgency-baixa {
+            color: green;
+        }
+        .urgency-media {
+            color: yellow;
+        }
+        .urgency-alta {
+            color: red;
+        }
+        select.resolver {
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Painel de Administração de Chamadas de TI</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Departamento ou Lab</th>
+                <th>Descrição</th>
+                <th>Data/Hora</th>
+                <th>Status</th>
+                <th>Urgência</th>
+                <th>Resolvido por</th>
+                <th>Data/Hora de Resolução</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr>
+                <td>{{ req[0] }}</td>
+                <td>{{ req[1] }}</td>
+                <td>{{ req[2] }}</td>
+                <td>{{ req[3] }}</td>
+                <td>{{ req[4] }}</td>
+                <td>{{ req[6] }}</td>
+                <td id="status-{{ req[0] }}">{{ req[7] }}</td>
+                <td class="{{ 'urgency-' + req[5].lower() }}">{{ req[5] }}</td>
+                <td>{{ req[8] }}</td>
+                <td>{{ req[9] }}</td>
+                <td>
+                    {% if req[7] == 'Pending' %}
+                    <form id="resolveForm-{{ req[0] }}" onsubmit="resolveRequest(event, '{{ req[0] }}')">
+                        <select name="resolved_by" class="resolver" required>
+                            <option value="" disabled selected>Selecione</option>
+                            <option value="Melky">Melky</option>
+                            <option value="Ítalo">Ítalo</option>
+                            <option value="Rafael">Rafael</option>
+                            <option value="Guilherme">Guilherme</option>
+                            <option value="Rafaela">Rafaela</option>
+                            <option value="Diego">Diego</option>
+                        </select>
+                        <button type="submit">Resolver</button>
+                    </form>
+                    {% else %}
+                    <button class="resolved" disabled>Resolvido</button>
+                    {% endif %}
+                    <form action="/admin/delete-request" method="post">
+                        <input type="hidden" name="request_id" value="{{ req[0] }}">
+                        <button type="submit" {% if req[7] == 'Pending' %}disabled{% endif %}>Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function resolveRequest(event, requestId) {
+            event.preventDefault();
+            var form = document.getElementById('resolveForm-' + requestId);
+            var formData = new FormData(form);
+            
+            fetch(`/resolve-request/${requestId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Solicitação marcada como resolvida!') {
+                    document.getElementById(`status-${requestId}`).innerText = 'Resolved';
+                    const button = form.querySelector('button[type="submit"]');
+                    button.innerText = 'Resolvido';
+                    button.classList.add('resolved');
+                    button.disabled = true;
+                    form.querySelector('select').disabled = true;
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert('Erro: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao marcar solicitação como resolvida.');
+            });
+        }
+    </script>
+</body>
+</html>
